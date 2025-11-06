@@ -8,10 +8,12 @@
    
 2. **Crear la base de datos con las tablas**
 -- Crear base de datos
+```sql
 CREATE DATABASE IF NOT EXISTS veterinaria;
 USE veterinaria;
 
 -- Tabla de usuarios
+```sql
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -21,6 +23,7 @@ CREATE TABLE usuarios (
 );
 
 -- Tabla de citas médicas
+```sql
 CREATE TABLE citas_medicas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre_propietario VARCHAR(100) NOT NULL,

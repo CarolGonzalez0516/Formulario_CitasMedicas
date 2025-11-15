@@ -1,10 +1,25 @@
 <?php
+session_start();
 include 'conexion.php';
+
+// Verificar si el admin inició sesión
+if (!isset($_SESSION['admin'])) {
+  header("Location: login_admin.php");
+  exit();
+}
+
+// Cerrar sesión
+if (isset($_GET['logout'])) {
+  session_destroy();
+  header("Location: login_admin.php");
+  exit();
+}
 
 // Consultar usuarios y citas
 $usuarios = $conn->query("SELECT * FROM usuarios");
 $citas = $conn->query("SELECT * FROM citas_medicas");
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -18,12 +33,20 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
     table th { background-color: #48C78E; color: white; text-align: center; }
     td, th { vertical-align: middle; text-align: center; }
     .btn { border-radius: 20px; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="top-bar">
+      <a href="?logout=true" class="btn btn-danger btn-sm">Cerrar sesión</a>
+    </div>
 
-    <!-- Tabs -->
     <ul class="nav nav-tabs" id="adminTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios" type="button" role="tab">Usuarios</button>
@@ -35,7 +58,7 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
 
     <div class="tab-content mt-4" id="adminTabsContent">
 
-      <!-- Tabla de Usuarios -->
+      <!-- Usuarios -->
       <div class="tab-pane fade show active" id="usuarios" role="tabpanel">
         <table class="table table-bordered table-hover align-middle">
           <thead>
@@ -51,16 +74,16 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
             if ($usuarios && $usuarios->num_rows > 0) {
               $contador = 1;
               while ($row = $usuarios->fetch_assoc()) {
-                // detectar nombre real de columnas
-                $nombre = isset($row['nombreUsuario']) ? $row['nombreUsuario'] : (isset($row['nombre']) ? $row['nombre'] : '');
-                $correo = isset($row['correoUsuario']) ? $row['correoUsuario'] : (isset($row['correo']) ? $row['correo'] : '');
+                $nombre = $row['nombre'] ?? '';
+                $correo = $row['correo'] ?? '';
+                $id = $row['id'] ?? '';
                 echo "<tr>
                         <td>{$contador}</td>
                         <td>" . htmlspecialchars($nombre) . "</td>
                         <td>" . htmlspecialchars($correo) . "</td>
                         <td>
-                          <button class='btn btn-warning btn-sm' onclick=\"editarUsuario('{$nombre}', '{$correo}')\">✏️ Editar</button>
-                          <button class='btn btn-danger btn-sm' onclick=\"eliminarRegistro('eliminar_usuario.php', '{$correo}')\">🗑️ Eliminar</button>
+                          <button class='btn btn-warning btn-sm' onclick=\"editarUsuario('{$nombre}', '{$correo}')\">Editar</button>
+                          <button class='btn btn-danger btn-sm' onclick=\"eliminarRegistro('eliminar_usuario.php', '{$id}')\">Eliminar</button>
                         </td>
                       </tr>";
                 $contador++;
@@ -73,7 +96,7 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
         </table>
       </div>
 
-      <!-- Tabla de Citas -->
+      <!-- Citas -->
       <div class="tab-pane fade" id="citas" role="tabpanel">
         <table class="table table-bordered table-hover align-middle">
           <thead>
@@ -98,8 +121,8 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
                         <td>" . htmlspecialchars($row['motivo']) . "</td>
                         <td>" . htmlspecialchars($row['fecha']) . "</td>
                         <td>
-                          <button class='btn btn-warning btn-sm' onclick=\"editarCita('{$row['id']}', '{$row['nombre_propietario']}', '{$row['nombre_mascota']}', '{$row['motivo']}', '{$row['fecha']}')\">✏️ Editar</button>
-                          <button class='btn btn-danger btn-sm' onclick=\"eliminarRegistro('eliminar_cita.php', '{$row['id']}')\">🗑️ Eliminar</button>
+                          <button class='btn btn-warning btn-sm' onclick=\"editarCita('{$row['id']}', '{$row['nombre_propietario']}', '{$row['nombre_mascota']}', '{$row['motivo']}', '{$row['fecha']}')\">Editar</button>
+                          <button class='btn btn-danger btn-sm' onclick=\"eliminarRegistro('eliminar_cita.php', '{$row['id']}')\">Eliminar</button>
                         </td>
                       </tr>";
                 $contador++;
@@ -118,7 +141,6 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    // Eliminar
     function eliminarRegistro(archivo, id) {
       Swal.fire({
         title: '¿Eliminar registro?',
@@ -135,7 +157,6 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
       });
     }
 
-    // Editar Usuario
     function editarUsuario(nombre, correo) {
       Swal.fire({
         title: 'Editar Usuario',
@@ -155,7 +176,6 @@ $citas = $conn->query("SELECT * FROM citas_medicas");
       });
     }
 
-    // Editar Cita
     function editarCita(id, propietario, mascota, motivo, fecha) {
       Swal.fire({
         title: 'Editar Cita',
